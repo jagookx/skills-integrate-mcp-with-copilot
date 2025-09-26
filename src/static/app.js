@@ -1,7 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
   const activitiesList = document.getElementById("activities-list");
-  const activitySelect = document.getElementById("activity");
-  const signupForm = document.getElementById("signup-form");
   const messageDiv = document.getElementById("message");
 
   // Function to fetch activities from API
@@ -37,6 +35,17 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>`
             : `<p><em>No participants yet</em></p>`;
 
+        // Add signup form directly to the card
+        const signupFormHTML = `
+          <form class="activity-signup-form" data-activity="${name}">
+            <div class="form-group">
+              <label for="email-${name}">Student Email:</label>
+              <input type="email" id="email-${name}" name="email" required placeholder="your-email@mergington.edu" />
+            </div>
+            <button type="submit">Sign Up</button>
+          </form>
+        `;
+
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
@@ -45,20 +54,20 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="participants-container">
             ${participantsHTML}
           </div>
+          ${signupFormHTML}
         `;
 
         activitiesList.appendChild(activityCard);
-
-        // Add option to select dropdown
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        activitySelect.appendChild(option);
       });
 
       // Add event listeners to delete buttons
       document.querySelectorAll(".delete-btn").forEach((button) => {
         button.addEventListener("click", handleUnregister);
+      });
+
+      // Add event listeners to each signup form
+      document.querySelectorAll(".activity-signup-form").forEach((form) => {
+        form.addEventListener("submit", handleSignup);
       });
     } catch (error) {
       activitiesList.innerHTML =
@@ -110,12 +119,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Handle form submission
-  signupForm.addEventListener("submit", async (event) => {
+  // Handle signup for each activity
+  async function handleSignup(event) {
     event.preventDefault();
-
-    const email = document.getElementById("email").value;
-    const activity = document.getElementById("activity").value;
+    const form = event.target;
+    const activity = form.getAttribute("data-activity");
+    const emailInput = form.querySelector("input[type='email']");
+    const email = emailInput.value;
 
     try {
       const response = await fetch(
@@ -132,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (response.ok) {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
-        signupForm.reset();
+        form.reset();
 
         // Refresh activities list to show updated participants
         fetchActivities();
@@ -153,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
     }
-  });
+  }
 
   // Initialize app
   fetchActivities();
